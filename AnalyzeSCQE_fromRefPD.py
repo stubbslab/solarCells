@@ -66,12 +66,12 @@ if __name__ == "__main__":
     dir_root = '/Users/sashabrownsberger/Documents/Harvard/physics/stubbs/solarCell/qe/'
     #data_files = [ stem + date_str + '.txt' for stem in ['SC_vs_PD_QE_with_B2987A_cellPosA_inten2_10_', 'SC_vs_PD_QE_with_B2987A_cellPosA_inten4_10_', 'SC_vs_PD_QE_with_B2987A_cellPosB_inten2_10_', 'SC_vs_PD_QE_with_B2987A_cellPosB_inten4_10_'] ]
 
-    stems = ['TestNewQE_']
+    stems = ['SC_QE_NewCell_']
     #suffixes = ['_1', '_1', '_MultiDay']
     suffixes = ['']
     #extra_save_suffixes = ['', '', '']
     extra_save_suffixes = ['_LongQECurve']
-    date_strs = ['20211231']
+    date_strs = ['20220401']
     extra_title_str = 'Cell ID ??'
     #cell_ids = [ 'Cell ED - ' + date_strs[0],  'Cell ED - ' + date_strs[1], 'Cell ED - ' + date_strs[2]]
     #cell_ids = ['Cell ED - ' + date_strs[0]]
@@ -81,10 +81,10 @@ if __name__ == "__main__":
     plot_wavelengths = 1
     #if we don't plot wavelengths, we plot in times
     data_file_indeces_to_include = 'all'
-    adj_vs_overall_std_ratio_for_inclusion = 0.8
+    adj_vs_overall_std_ratio_for_inclusion = 0.0 #0.8
 
     zoomed_in_QE_lims = [0.89, 1.01]
-    lp_filter_wavelength = 655
+    lp_filter_wavelength = 550
     wavelength_correction = -5
     n_qe_spline_points = 21
     insert_longpass = 0
@@ -252,6 +252,7 @@ if __name__ == "__main__":
 
         print ('Making plots for SC and PD traces...')
         for k in range(len([full_PD_illum, full_SC_illum])):
+            #Cut out measurements with large drift term
             print ('bad_measurements = ' + str(bad_measurements))
             all_data_y_set = [full_PD_illum, full_SC_illum][k]
             v_line_index = [burn_in_PD, burn_in_SC][k]
@@ -267,7 +268,7 @@ if __name__ == "__main__":
         print ('bad_data_indeces[i] = ' + str(bad_data_indeces[i]))
         for k in range(len(all_data_x_sets)):
             print ('k = ' + str(k))
-            single_data_figure, data_axis_arr = plt.subplots(n_rows, n_single_shot_cols, figsize = (n_single_shot_cols * 3, n_rows * 3), sharex = True, squeeze = False)
+            single_data_figure, data_axis_arr = plt.subplots(n_rows, n_single_shot_cols, figsize = (n_single_shot_cols * 1, n_rows * 1), sharex = True, squeeze = False)
             #data_axis_arr = all_data_axes [k]
             all_data_x_set = all_data_x_sets[k]
             all_data_y_set = all_data_y_sets[k]
@@ -314,10 +315,11 @@ if __name__ == "__main__":
         PD_illum_std = [PD_illum_stats[j][1] for j in range(len(PD_illum_stats)) if not (j in bad_data_indeces[i]) ]
         PD_dark_mean = [PD_dark_stats[j][0] for j in range(len(PD_dark_stats)) if not (j in bad_data_indeces[i]) ]
         PD_dark_std = [PD_dark_stats[j][1] for j in range(len(PD_dark_stats)) if not (j in bad_data_indeces[i]) ]
-        SC_diff = (np.array(SC_illum_mean) - 0.0)
+        #SC_diff = (np.array(SC_illum_mean) - 0.0)
+        SC_diff = (np.array(SC_illum_mean) - np.array(SC_dark_mean))
         SC_diff_std = np.sqrt(np.array(SC_illum_std) ** 2.0 + np.array(SC_dark_std) ** 2.0)
         #SC_diff_std = np.array(SC_illum_std)
-        PD_diff = (np.array(PD_illum_mean) - 0.0)
+        PD_diff = (np.array(PD_illum_mean) - np.array(PD_dark_mean)) 
         PD_diff_std = np.sqrt(np.array(PD_illum_std) ** 2.0 + np.array(PD_dark_std) ** 2.0)
         #PD_diff_std = np.array(PD_illum_std)
         ratios = SC_diff / PD_diff
@@ -415,5 +417,5 @@ if __name__ == "__main__":
     plt.tight_layout()
     print ('Saving QE plots...')
     f_QE.savefig(data_dir + save_file_names[-1])
-    can.saveListsToColumns([SC_x_vals, PD_QE_interp(true_wavelengths) * np.array(ratios)],  save_data_file_names[-1], data_dir, header = ['Wavelength (nm), QE (unitless)'], sep = ', ')
+    can.saveListsToColumns([SC_x_vals, PD_QE_interp(true_wavelengths) * np.array(ratios), PD_QE_interp(true_wavelengths) * np.array(ratio_errs)],  save_data_file_names[-1], data_dir, header = ['Wavelength (nm), QE (unitless), QE Err (unitless)'], sep = ', ')
     print ('Done.')
